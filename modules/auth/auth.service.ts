@@ -11,19 +11,12 @@ export class AuthService {
       where: { token: data.token },
     });
 
-    console.log("****Step 1: Found Invitation****", invitation);
-
     //conditions to throw error if invitation is not there
     //or does not have status === "pending"
     if (!invitation) throw new NotFoundError("Invalid Token");
 
-    console.log("****Step 2: Validating Invitation Status****", invitation.status);
-
     if (invitation.status !== "pending")
       throw new BadRequestError("Token already used or expired");
-
-    console.log("****Step 3: Checking Token Expiry****", invitation.expiresAt);
-
 
     //token has been expired
     if (invitation.expiresAt < new Date()) {
@@ -34,8 +27,6 @@ export class AuthService {
       throw new BadRequestError("Token has expired");
     }
 
-    console.log("****Step 4: Fetching User by Email****", invitation.email);
-
     //user has invitation now registering in the app for the first time
     //but user already has an invitation table record so....
     const user = await prisma.user.findUnique({
@@ -43,8 +34,6 @@ export class AuthService {
     });
 
     if (!user) throw new NotFoundError("User Not Found");
-
-    console.log("****Step 5: Found User****", user);
 
     const passwordHash = await bcrypt.hash(data.password, 10);
 
@@ -65,7 +54,6 @@ export class AuthService {
       }),
     ]);
 
-    console.log("****Step 6: Registration Successful****", { id: user.id, email: user.email, name: data.name });
     return { id: user.id, email: user.email, name: data.name };
   }
 }
