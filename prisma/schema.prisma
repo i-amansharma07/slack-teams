@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrgRole {
+  org_admin
+  moderator
+  member
+  guest
+}
+
+enum MemberStatus {
+  pending
+  active
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  isSuperAdmin Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  createdOrgs          Organization[]           @relation("CreatedOrgs")
+  deletedOrgs          Organization[]           @relation("DeletedOrgs")
+  orgMemberships       OrgMember[]              @relation("UserOrgMemberships")
+  roleUpdatedMembers   OrgMember[]              @relation("RoleUpdatedBy")
+  invitationsSent      Invitation[]
+  channelsCreated      Channel[]                @relation("ChannelsCreated")
+  channelsDeleted      Channel[]                @relation("ChannelsDeleted")
+  channelMemberships   ChannelMember[]          @relation("UserChannelMemberships")
+  channelMembersAdded  ChannelMember[]          @relation("ChannelMembersAdded")
+  messagesSent         ChannelMessage[]         @relation("MessagesSent")
+  messagesDeleted      ChannelMessage[]         @relation("MessagesDeleted")
+  reactions            ChannelMessageReaction[]
+  dmParticipations     DmParticipant[]
+  dmMessagesSent       DmMessage[]              @relation("DmMessagesSent")
+  dmMessagesDeleted    DmMessage[]              @relation("DmMessagesDeleted")
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  createdBy String
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  deletedBy String?
+
+  creator     User         @relation("CreatedOrgs", fields: [createdBy], references: [id])
+  deleter     User?        @relation("DeletedOrgs", fields: [deletedBy], references: [id])
+  members     OrgMember[]
+  channels    Channel[]
+  invitations Invitation[]
+}
+
+model OrgMember {
+  id            String       @id @default(uuid())
+  orgId         String
+  userId        String       @unique
+  role          OrgRole
+  status        MemberStatus @default(pending)
+  joinedAt      DateTime     @default(now())
+  roleUpdatedBy String?
+  roleUpdatedAt DateTime?
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user        User         @relation("UserOrgMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  roleUpdater User?        @relation("RoleUpdatedBy", fields: [roleUpdatedBy], references: [id])
+
+  @@unique([userId, orgId])
+}
+
+model Invitation {
+  id        String           @id @default(uuid())
+  email     String
+  orgId     String
+  role      OrgRole
+  token     String           @unique
+  invitedBy String
+  status    InvitationStatus @default(pending)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  inviter User         @relation(fields: [invitedBy], references: [id])
+
+  @@unique([email, orgId, status])
+}
+
+model Channel {
+  id        String    @id @default(uuid())
+  orgId     String
+  name      String
+  createdBy String
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  deletedBy String?
+
+  org      Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator  User             @relation("ChannelsCreated", fields: [createdBy], references: [id])
+  deleter  User?            @relation("ChannelsDeleted", fields: [deletedBy], references: [id])
+  members  ChannelMember[]
+  messages ChannelMessage[]
+}
+
+model ChannelMember {
+  id        String    @id @default(uuid())
+  channelId String
+  userId    String
+  addedBy   String
+  expiresAt DateTime?
+  addedAt   DateTime  @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation("UserChannelMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  adder   User    @relation("ChannelMembersAdded", fields: [addedBy], references: [id])
+
+  @@unique([userId, channelId])
+}
+
+model ChannelMessage {
+  id        String    @id @default(uuid())
+  channelId String
+  senderId  String
+  content   String
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  deletedBy String?
+
+  channel   Channel                  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender    User                     @relation("MessagesSent", fields: [senderId], references: [id])
+  deleter   User?                    @relation("MessagesDeleted", fields: [deletedBy], references: [id])
+  reactions ChannelMessageReaction[]
+}
+
+model ChannelMessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model DmConversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  participants DmParticipant[]
+  messages     DmMessage[]
+}
+
+model DmParticipant {
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  conversation DmConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id])
+
+  @@id([conversationId, userId])
+}
+
+model DmMessage {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime  @default(now())
+  deletedAt      DateTime?
+  deletedBy      String?
+
+  conversation DmConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User           @relation("DmMessagesSent", fields: [senderId], references: [id])
+  deleter      User?          @relation("DmMessagesDeleted", fields: [deletedBy], references: [id])
+}
