@@ -6,6 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "db:migrate" : "npx prisma dev",
+    "db:push" : "npx prisma db push",
+    "db:generate" : "npx prisma generate",
+    "db:reset" : "npx prisma migrate reset",
+    "db:studio" : "npx prisma studio",
     "lint": "eslint"
   },
   "dependencies": {

@@ -1,9 +1,10 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials"; // to sigin with custom mail and pass.
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/db/prisma";
 import { LoginSchema } from "./auth.schema";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { UserRepo } from "@/db/repos/user.repo";
 
 class InvalidCredentialsError extends CredentialsSignin {
   code = "invalid_credentials";
@@ -15,14 +16,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsedUser = LoginSchema.safeParse(credentials);
-        
+
         if (!parsedUser.success)
           throw new InvalidCredentialsError("Invalid email or password format");
 
-        const user = await prisma.user.findUnique({
-          where: { email: parsedUser.data.email },
-        });
+        const user = await UserRepo.findByMail(parsedUser.data.email);
 
+      
         if (!user)
           throw new InvalidCredentialsError("No account found with this email");
 
