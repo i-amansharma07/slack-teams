@@ -1,6 +1,5 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials"; // to sigin with custom mail and pass.
-import { prisma } from "@/db/prisma";
 import { LoginSchema } from "./auth.schema";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
