@@ -4,8 +4,8 @@ import { CreateOrgSchema } from "@/modules/org/org.schema";
 import { BadRequestError, handleError } from "@/shared/errors";
 import { withLogger } from "@/lib/with-logger";
 import { NextRequest } from "next/server";
-import { id } from "zod/locales";
 
+//super admin can see all the orgs 
 export const GET = withLogger(async () => {
   try {
     await requireSuperAdmin();
@@ -16,6 +16,12 @@ export const GET = withLogger(async () => {
   }
 });
 
+
+//super admin create a new org (only super admin can create org)
+//TODO: at application and db layer
+/* ***Prod*** :  we ask orgs like give me the name and email of the person
+                 who's gonna be the head of this app in your company. 
+*/  
 export const POST = withLogger(async (req: NextRequest) => {
   try {
     const session = await requireSuperAdmin();
@@ -26,7 +32,11 @@ export const POST = withLogger(async (req: NextRequest) => {
       body.data,
       session.user?.id as string,
     );
-    return Response.json({});
+    return Response.json({
+      message: "Org created",
+      org: createOrg,
+      status: 201,
+    });
   } catch (error) {
     return handleError(error);
   }

@@ -9,6 +9,19 @@ type LogEntry = {
   ip?: string;
 };
 
+type Info = string | object;
 export function logRequest(entry: LogEntry): void {
-  console.log(JSON.stringify(entry,null, 2));
+  console.log(
+    `\x1b[32mRequest entry log\x1b[0m :  ${JSON.stringify(entry, null, 2)} ${endLine()}`,
+  );
+}
+
+export function logInfo(info: Info): void {
+  console.log(
+    `\x1b[33mLog\x1b[0m : ${JSON.stringify(info, null, 2)} ${endLine()}`,
+  );
+}
+
+function endLine() {
+  return `\n \x1b[97m___________________________________________\x1b[0m \n`;
 }

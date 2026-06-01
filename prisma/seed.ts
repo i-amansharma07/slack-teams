@@ -25,6 +25,8 @@ async function main() {
   console.log("Super Admin Seeded", reqDB?.id);
 }
 
+//TODO: creat seed data for creating 2 orgs as well (can call internal methods?)
+
 main()
   .catch(console.error)
   .finally(async () => {

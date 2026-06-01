@@ -10,6 +10,9 @@ export class AuthService {
   async register(data: RegisterDTO) {
     //checking out the invitation table and findig the invite to app
     //repo pattern
+    /*  ***prod***  :  when super admin send invitation to the orgadmin
+    that invite link is only valid for 7 days.
+    */
     const invitation = await InvitationRepo.findByToken(data.token);
 
     //conditions to throw error if invitation is not there
@@ -25,8 +28,11 @@ export class AuthService {
       throw new BadRequestError("Token has expired");
     }
 
-    //user has invitation now registering in the app for the first time
-    //but user already has an invitation table record so....
+
+    // ***prod** orgadmin has invitation now registering in t
+    // he app for the first time
+    //and superadmin has already created a user in 
+    // user's table with name and mail. 
     const user = await UserRepo.findByMail(invitation.email);
 
     if (!user) throw new NotFoundError("User Not Found");

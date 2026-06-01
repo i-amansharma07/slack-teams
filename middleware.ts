@@ -9,7 +9,8 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const isPublicRoute =
     req.nextUrl.pathname.startsWith("/api/auth/login") ||
-    req.nextUrl.pathname.startsWith("/api/auth/register")
+    req.nextUrl.pathname.startsWith("/api/auth/register")  ||
+    req.nextUrl.pathname.startsWith("/api/todos")
 
   if (!req.auth && !isPublicRoute) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

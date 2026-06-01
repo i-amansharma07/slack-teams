@@ -26,7 +26,7 @@ export class OrgService {
     const result = await prisma.$transaction(async (tx) => {
       const newOrg = await OrganizationRepo.create(
         {
-          name: data.name,
+          name: data.org_name,
           createBy: superAdminId,
         },
         tx,
