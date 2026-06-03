@@ -54,6 +54,7 @@ export class OrgService {
       return newOrg;
     });
 
+    //TODO: will complete email service this later
     // await sendOrgAdminInvite({email : data.adminEmail, token, orgName : data.name});
     return result;
   }

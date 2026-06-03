@@ -1,5 +1,8 @@
+import { logInfo } from "@/lib/logger";
 import type { NextAuthConfig } from "next-auth";
 
+
+//TODO: understand jwt and session callbacks
 export const authConfig = {
   //here we can provide Google/ Gitub etc Auth
   providers: [],

@@ -7,12 +7,10 @@ right HTTP error automatically.
 
 */
 
-import { auth } from "@/modules/auth/auth";
 import { ForbiddenError, UnauthorizedError } from "@/shared/errors";
+import { Session } from "next-auth";
 
-export async function requireSuperAdmin() {
-  const session = await auth();
-
+export async function requireSuperAdmin(session: Session | null) {
   //checking wether user is logged in or not
   if (!session?.user) throw new UnauthorizedError();
 
