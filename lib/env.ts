@@ -6,6 +6,7 @@ function require(name: string): string {
 
 export const env = {
   DATABASE_URL: require("DATABASE_URL"),
+  REDIS_URL: require("REDIS_URL"),
   NEXT_PUBLIC_APP_URL: require("NEXT_PUBLIC_APP_URL"),
   NODE_ENV: process.env.NODE_ENV ?? "development",
   SUPER_ADMIN_EMAIL: require("SUPER_ADMIN_EMAIL"),

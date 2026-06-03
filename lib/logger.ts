@@ -18,10 +18,16 @@ export function logRequest(entry: LogEntry): void {
 
 export function logInfo(info: Info): void {
   console.log(
-    `\x1b[33mLog\x1b[0m : ${JSON.stringify(info, null, 2)} ${endLine()}`,
+    `\n \x1b[33mLog\x1b[0m : ${JSON.stringify(info, null, 2)} ${endLine()}`,
+  );
+}
+
+export function logError(info: Info): void {
+  console.log(
+    `\n \x1b[31mError\x1b[0m : ${JSON.stringify(info, null, 2)} ${endLine()}`,
   );
 }
 
 function endLine() {
-  return `\n \x1b[97m___________________________________________\x1b[0m \n`;
+  return `\n \x1b[97m___________________________________________\x1b[0m`;
 }
