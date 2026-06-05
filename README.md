@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# slack-teams
+
+A Slack/Teams-inspired collaboration platform. Multi-tenant, role-based, real-time messaging.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 |
+| Database | PostgreSQL + Prisma |
+| Auth | Auth.js v5 (credentials) |
+| Cache | Redis + ioredis |
+| Real-time | Pusher |
+| Email | Resend |
+| Validation | Zod |
+
+## Roles
+
+`super_admin` → `org_admin` → `moderator` → `member` → `guest`
+
+- Super Admin: platform-level — creates orgs, assigns org admins
+- Org Admin: org-level — manages members, channels, workspaces
+- Moderator: channel-level — manages channel membership, can delete messages
+- Member: can send/read messages, react, DM
+- Guest: read + DM only, expires 30 days after channel invite
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Start infrastructure
+docker compose up -d
+
+# Install dependencies
+npm install
+
+# Push schema + seed
+npm run db:push
+npm run db:seed
+
+# Run dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires a `.env` file:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/slack_teams
+REDIS_URL=redis://localhost:6379
+AUTH_SECRET=your_secret
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+modules/
+  auth/        # login, registration, invite flow
+  org/         # org CRUD (super-admin only)
+lib/
+  cache.ts     # Redis CacheService facade
+  cache-keys.ts
+  redis.ts     # ioredis singleton
+db/
+  repos/       # one repo per model, pure DB operations
+  prisma.ts
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run db:push` | Push schema to DB |
+| `npm run db:seed` | Seed initial data |
+| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:reset` | Reset DB and re-seed |
