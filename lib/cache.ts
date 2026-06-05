@@ -35,7 +35,13 @@ class CacheService {
     fn: () => Promise<T>,
   ): Promise<T> {
     const cached = await this.get<T>(key);
-    if (cached !== null) return cached;
+    if (cached !== null) {
+      logInfo("Cache hit");
+      return cached;
+    } 
+    // else {
+    //   logInfo("Cache miss");
+    // }
 
     const fresh = await fn();
     if (fresh !== null && fresh !== undefined) {

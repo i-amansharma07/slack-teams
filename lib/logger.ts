@@ -16,7 +16,7 @@ export function logRequest(entry: LogEntry): void {
   );
 }
 
-export function logInfo(info: Info): void {
+export function logInfo(info: any): void {
   console.log(
     `\n \x1b[33mLog\x1b[0m : ${JSON.stringify(info, null, 2)} ${endLine()}`,
   );

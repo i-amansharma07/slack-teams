@@ -5,6 +5,9 @@ import { BadRequestError, NotFoundError } from "@/shared/errors";
 import { InvitationRepo } from "@/db/repos/invitation.repo";
 import { UserRepo } from "@/db/repos/user.repo";
 import { OrganizationRepo } from "@/db/repos/org.repo";
+import { cache } from "@/lib/cache";
+import { CacheKeys } from "@/lib/cache-keys";
+
 export class AuthService {
   // we will get {name, token, pass} here in params
   async register(data: RegisterDTO) {
@@ -13,7 +16,19 @@ export class AuthService {
     /*  ***prod***  :  when super admin send invitation to the orgadmin
     that invite link is only valid for 7 days.
     */
-    const invitation = await InvitationRepo.findByToken(data.token);
+    // const invitation = await InvitationRepo.findByToken(data.token);
+
+    /* 
+    
+    Every registration call validates the invitation token. Cache it for 5 minutes — short TTL
+because tokens are one-time-use and we explicitly bust the key anyway on acceptance.
+    
+    */
+    const invitation = await cache.wrap(
+      CacheKeys.invitationByToken(data.token),
+      300, //5 min
+      () => InvitationRepo.findByToken(data.token),
+    );
 
     //conditions to throw error if invitation is not there
     //or does not have status === "pending"
@@ -28,11 +43,10 @@ export class AuthService {
       throw new BadRequestError("Token has expired");
     }
 
-
     // ***prod** orgadmin has invitation now registering in t
     // he app for the first time
-    //and superadmin has already created a user in 
-    // user's table with name and mail. 
+    //and superadmin has already created a user in
+    // user's table with name and mail.
     const user = await UserRepo.findByMail(invitation.email);
 
     if (!user) throw new NotFoundError("User Not Found");
@@ -49,6 +63,11 @@ export class AuthService {
         InvitationRepo.markAccepted(invitation.id, tx),
       ]);
     });
+
+    await cache.del(
+      CacheKeys.invitationByToken(data.token),
+      CacheKeys.userByEmail(invitation.email),
+    );
 
     return { id: user.id, email: user.email, name: data.name };
   }

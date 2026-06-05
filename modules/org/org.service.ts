@@ -7,6 +7,8 @@ import { InvitationRepo } from "@/db/repos/invitation.repo";
 import { OrgRole } from "@/lib/generated/prisma/enums";
 import { ConflictError, NotFoundError } from "@/shared/errors";
 // import {sendOrgAdminInvite} from "@/lib/email";
+import { cache } from "@/lib/cache";
+import { CacheKeys } from "@/lib/cache-keys";
 
 export class OrgService {
   async createOrgwithAdmin(data: CreateOrgDTO, superAdminId: string) {
@@ -15,9 +17,13 @@ export class OrgService {
     //create org and add the org member with role as org_admin
     //create invitation with pending status
 
-    const existinguser = await UserRepo.findByMail(data.adminEmail);
+    const existingUser = await cache.wrap(
+      CacheKeys.userByEmail(data.adminEmail),
+      600,
+      () => UserRepo.findByMail(data.adminEmail),
+    );
 
-    if (existinguser)
+    if (existingUser)
       throw new ConflictError("A user with this email Already exists");
 
     const token = crypto.randomUUID();
@@ -54,20 +60,36 @@ export class OrgService {
       return newOrg;
     });
 
+    await cache.del(CacheKeys.orgAdminList());
     //TODO: will complete email service this later
     // await sendOrgAdminInvite({email : data.adminEmail, token, orgName : data.name});
     return result;
   }
 
   async listOrgs() {
-    return OrganizationRepo.findAllOrgAdmin();
+    return await cache.wrap(
+      CacheKeys.orgAdminList(),
+      600, //10 mins,
+      () => OrganizationRepo.findAllOrgAdmin(),
+    );
   }
 
   async deleteOrg(orgId: string, superAdminId: string) {
-    const org = await OrganizationRepo.findById(orgId);
-    if (!org) throw new NotFoundError("Organisation not found");
+    const org = await cache.wrap(
+      CacheKeys.orgById(orgId),
+      900, // 15 minutes
+      () => OrganizationRepo.findById(orgId),
+    );
+
+    if (!org) throw new NotFoundError("Organization not found");
     if (org.deletedAt)
       throw new ConflictError("Organization is already deleted");
-    return OrganizationRepo.softDelete(org.id, superAdminId);
+
+    const result = await OrganizationRepo.softDelete(orgId, superAdminId);
+
+    // Bust both keys — the specific org AND the list
+    await cache.del(CacheKeys.orgById(orgId), CacheKeys.orgAdminList());
+
+    return result;
   }
 }
