@@ -67,11 +67,13 @@ export class OrgService {
   }
 
   async listOrgs() {
-    return await cache.wrap(
-      CacheKeys.orgAdminList(),
-      600, //10 mins,
-      () => OrganizationRepo.findAllOrgAdmin(),
-    );
+    // return await cache.wrap(
+    //   CacheKeys.orgAdminList(),
+    //   600, //10 mins,
+    //   () => OrganizationRepo.findAllOrgAdmin(),
+    // );
+
+    return  OrganizationRepo.findAllOrgAdmin();
   }
 
   async deleteOrg(orgId: string, superAdminId: string) {

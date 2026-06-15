@@ -5,12 +5,14 @@ import {
   OrgRole,
   OrgMember,
   MemberStatus,
+  InvitationStatus,
 } from "@/lib/generated/prisma/client";
 
 type Tx = Prisma.TransactionClient;
 
 const org = prisma.organization;
 const orgMember = prisma.orgMember;
+const invitation = prisma.invitation;
 
 function getOrgClient(tx: Tx | undefined) {
   return tx ? tx.organization : org;
@@ -18,6 +20,10 @@ function getOrgClient(tx: Tx | undefined) {
 
 function getOrgMemberClient(tx: Tx | undefined) {
   return tx ? tx.orgMember : orgMember;
+}
+
+function getInviteClient(tx: Tx | undefined) {
+  return tx ? tx.invitation : invitation;
 }
 
 class OrgClass {
@@ -57,18 +63,17 @@ class OrgClass {
       include: {
         members: {
           where: { role: OrgRole.org_admin },
-          include: {
-            user: {
-              select: { id: true, email: true, name: true },
-            },
-          },
+          // include: {
+          //   user: {
+          //     // select: { id: true, email: true, name: true },
+          //   },
+          // },
         },
       },
     });
   }
 
   /*****Org Members******/
-  //create orgMember by orgAdmin & Super Admin(only initially)
   createMember(
     data: { orgId: string; userId: string; role: OrgRole },
     tx?: Tx,
@@ -88,6 +93,72 @@ class OrgClass {
     return client.update({
       where: { userId: id },
       data: { status: MemberStatus.active },
+    });
+  }
+
+  //Used by the `requireOrgAdmin` guard.
+  findMemberByUserId(userId: string, orgId: string, tx?: Tx) {
+    const client = getOrgMemberClient(tx);
+    return client.findUnique({
+      where: { userId_orgId: { userId, orgId } },
+    });
+  }
+
+  //Returns all members of an org with their user details — both `active` and `pending` so the Org
+  //Admin can see who hasn't registered yet.
+  findAllMembers(orgId: string, tx?: Tx) {
+    const client = getOrgMemberClient(tx);
+    return client.findMany({
+      where: { orgId },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true },
+        },
+      },
+      orderBy: { joinedAt: "asc" },
+    });
+  }
+
+  //orgId is included in this method for extra precaution
+  //so that orgAdmin from one org can't delete member of some other org
+  updateMemberRole(
+    memberId: string,
+    orgId: string,
+    newRole: OrgRole,
+    updatedBy: string,
+    tx?: Tx,
+  ) {
+    const client = getOrgMemberClient(tx);
+    return client.update({
+      where: { id: memberId, orgId: orgId },
+      data: {
+        role: newRole,
+        roleUpdatedBy: updatedBy,
+        roleUpdatedAt: new Date(),
+      },
+    });
+  }
+
+  //hard delete
+  removeMember(orgId: string, memberId: string, tx?: Tx) {
+    const client = getOrgMemberClient(tx);
+    return client.delete({
+      where: { id: memberId, orgId },
+    });
+  }
+
+  //Checks whether a pending invitation already exists for an email in an org. Used before creating
+  //a new invite so we can expire the old one first (re-invite flow).
+  findPendingInvitation(email: string, orgId: string, tx?: Tx) {
+    const client = getInviteClient(tx);
+    return client.findUnique({
+      where: {
+        email_orgId_status: {
+          email,
+          orgId,
+          status: InvitationStatus.pending,
+        },
+      },
     });
   }
 }

@@ -8,16 +8,22 @@ import { Session } from "next-auth";
 //Response in promise manner
 type RouteHandler = (
   req: NextRequest,
-  session?: Session | null,
+  session: Session | null,
+  context: { params: Promise<Record<string, string>> },
 ) => Promise<Response>;
 
-export function withLogger(handler: RouteHandler): RouteHandler {
-  return async (req: NextRequest) => {
+type NextRouteHandler = (
+  req: NextRequest,
+  context: { params: Promise<Record<string, string>> },
+) => Promise<Response>;
+
+export function withLogger(handler: RouteHandler): NextRouteHandler {
+  return async (req: NextRequest, context) => {
     const requestId = uuidv4();
     const start = Date.now();
 
     const session = await auth();
-    const response = await handler(req, session);
+    const response = await handler(req, session, context);
 
     const end = Date.now();
 

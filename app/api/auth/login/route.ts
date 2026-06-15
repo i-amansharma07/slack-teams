@@ -3,6 +3,7 @@ import { CredentialsSignin } from "next-auth";
 import { signIn } from "@/modules/auth/auth";
 import { BadRequestError, handleError } from "@/shared/errors";
 import { withLogger } from "@/lib/with-logger";
+import { logInfo } from "@/lib/logger";
 
 export const POST = withLogger(async (req: Request) => {
   try {

@@ -57,11 +57,13 @@ because tokens are one-time-use and we explicitly bust the key anyway on accepta
     // now update user, org and invitation table
 
     await prisma.$transaction(async (tx) => {
-      await Promise.all([
+      const p = await Promise.all([
         UserRepo.completeRegistration(user.id, data.name, passwordHash, tx),
         OrganizationRepo.markMemberActive(user.id, tx),
         InvitationRepo.markAccepted(invitation.id, tx),
       ]);
+
+      console.log("prisma trans", p);
     });
 
     await cache.del(

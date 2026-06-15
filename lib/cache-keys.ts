@@ -4,4 +4,8 @@ export const CacheKeys = {
   orgById: (orgId: string) => `org:${orgId}`,
   orgAdminList: () => `orgs:all:admin_list`,
   invitationByToken: (token: string) => `invitation:token:${token}`,
+  orgMemberByUserId: (userId: string, orgId: string) =>
+    `org_member:${orgId}:user:${userId}`,
+  orgMembers: (orgId: string) => `org_members:${orgId}`,
 };
+
