@@ -60,14 +60,19 @@ class OrgClass {
     const client = getOrgClient(tx);
     return client.findMany({
       where: { deletedAt: null },
-      include: {
+      select: {
+        id : true,
+        name : true,
         members: {
           where: { role: OrgRole.org_admin },
-          // include: {
-          //   user: {
-          //     // select: { id: true, email: true, name: true },
-          //   },
-          // },
+          select: {
+            id: true,
+            status: true,
+            role: true,
+            user: {
+              select: { id: true, email: true, name: true },
+            },
+          },
         },
       },
     });
@@ -110,7 +115,9 @@ class OrgClass {
     const client = getOrgMemberClient(tx);
     return client.findMany({
       where: { orgId },
-      include: {
+      select: {
+        id :true,
+        role : true,
         user: {
           select: { id: true, email: true, name: true },
         },

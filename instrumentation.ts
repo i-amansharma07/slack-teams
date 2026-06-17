@@ -18,7 +18,7 @@ export async function register() {
 
     try {
       await redis.ping();
-      // redis "ready" event in db/redis.ts logs "redis connected"
+      logInfo("redis connected");
     } catch (err) {
       logError(err instanceof Error ? err.message : String(err));
     }

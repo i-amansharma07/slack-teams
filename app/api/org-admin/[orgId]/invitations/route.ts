@@ -10,12 +10,11 @@ export const POST = withLogger(
     try {
       const { orgId } = await params;
       await requireOrgAdmin(session, orgId);
-      const rawBody = req.json();
+      const rawBody = await req.json();
       const body = InviteMemberSchema.safeParse(rawBody);
       if (!body.success) {
         throw new BadRequestError(body.error.message);
       }
-
       await getOrgAdminService().inviteMember(
         orgId,
         body.data,

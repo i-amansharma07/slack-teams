@@ -36,7 +36,7 @@ class CacheService {
   ): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) {
-      logInfo("Cache hit");
+      // logInfo("Cache hit");
       return cached;
     } 
     // else {
