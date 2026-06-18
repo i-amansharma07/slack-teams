@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const session = (await auth()) as AdminSession | null;
 
   if (!session || !session.user.isSuperAdmin) {
-    redirect("/login");
+    redirect("/super-admin/login");
   }
 
   return (
